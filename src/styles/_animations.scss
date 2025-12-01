@@ -1,0 +1,35 @@
+// Animations
+
+@keyframes fall {
+  0% {
+    transform: translateY(-10px) translateX(0);
+  }
+  100% {
+    transform: translateY(310px) translateX(20px);
+  }
+}
+
+@keyframes shake {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(5deg) scale(0.95); }
+  50% { transform: rotate(-5deg) scale(0.95); }
+  75% { transform: rotate(5deg) scale(0.95); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes storm {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(10px, 10px); }
+  50% { transform: translate(-10px, 20px); }
+  75% { transform: translate(5px, -10px); }
+  100% { transform: translate(0, 0); }
+}
+
+.shaking {
+  animation: shake 0.5s ease-in-out infinite;
+  
+  .snowflake {
+    animation-duration: 0.5s !important; // Speed up snow
+    animation-name: storm; // Change to storm animation
+  }
+}

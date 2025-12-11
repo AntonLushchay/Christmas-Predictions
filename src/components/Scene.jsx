@@ -8,13 +8,13 @@ function CameraRig() {
     useFrame((state) => {
         // Mouse position: x and y are between -1 and 1
         // Multiply by a small factor to limit the range of movement
-        const x = state.mouse.x * 0.5; 
+        const x = state.mouse.x * 0.5;
         const y = state.mouse.y * 0.5;
-        
+
         // Smoothly interpolate camera position
         state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, x, 0.05);
         state.camera.position.y = THREE.MathUtils.lerp(state.camera.position.y, y, 0.05);
-        
+
         // Ensure camera always looks at the center
         state.camera.lookAt(0, 0, 0);
     });

@@ -1,15 +1,48 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { Environment, PerspectiveCamera, useTexture } from '@react-three/drei';
 import Globe from './Globe';
 import * as THREE from 'three';
 
 function CameraRig() {
+    const { gl } = useThree();
+    const touchPos = React.useRef({ x: 0, y: 0 });
+    const isTouching = React.useRef(false);
+
+    React.useEffect(() => {
+        const canvas = gl.domElement;
+
+        const handleTouchMove = (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+
+                // Convert touch position to normalized coordinates (-1 to 1)
+                touchPos.current.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+                touchPos.current.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+                isTouching.current = true;
+            }
+        };
+
+        const handleTouchEnd = () => {
+            isTouching.current = false;
+        };
+
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchcancel', handleTouchEnd);
+
+        return () => {
+            canvas.removeEventListener('touchmove', handleTouchMove);
+            canvas.removeEventListener('touchend', handleTouchEnd);
+            canvas.removeEventListener('touchcancel', handleTouchEnd);
+        };
+    }, [gl]);
+
     useFrame((state) => {
-        // Mouse position: x and y are between -1 and 1
-        // Multiply by a small factor to limit the range of movement
-        const x = state.mouse.x * 0.5;
-        const y = state.mouse.y * 0.5;
+        // Use touch position if touching, otherwise use mouse position
+        const x = (isTouching.current ? touchPos.current.x : state.mouse.x) * 0.3;
+        const y = (isTouching.current ? touchPos.current.y : state.mouse.y) * 0.3;
 
         // Smoothly interpolate camera position
         state.camera.position.x = THREE.MathUtils.lerp(state.camera.position.x, x, 0.05);
@@ -68,8 +101,10 @@ function Background() {
     }
 
     texture.colorSpace = THREE.SRGBColorSpace;
+    // Scale up background by 20% to prevent edges showing when camera moves
+    const bgScale = 1.2;
     return (
-        <mesh position={[0, 0, -5]} scale={[planeWidth, planeHeight, 1]}>
+        <mesh position={[0, 0, -5]} scale={[planeWidth * bgScale, planeHeight * bgScale, 1]}>
             <planeGeometry />
             <meshBasicMaterial map={texture} toneMapped={false} />
         </mesh>
@@ -77,11 +112,22 @@ function Background() {
 }
 
 export default function Scene({ isShaking, prediction }) {
+    const isMobile = useMemo(() => {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+        );
+    }, []);
+
     return (
         <Canvas
-            dpr={[1, 2]} // Support high-DPI screens (retina, mobile)
-            style={{ background: 'transparent', width: '100%', height: '100%' }}
-            gl={{ alpha: true, antialias: true, preserveDrawingBuffer: true }}
+            dpr={isMobile ? 1 : [1, 1.5]}
+            style={{ background: 'transparent', width: '100vw', height: '100vh' }}
+            gl={{
+                alpha: true,
+                antialias: !isMobile,
+                preserveDrawingBuffer: false,
+                powerPreference: 'high-performance',
+            }}
         >
             <PerspectiveCamera makeDefault position={[0, 0, 3.5]} />
             <CameraRig />

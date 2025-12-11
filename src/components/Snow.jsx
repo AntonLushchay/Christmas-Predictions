@@ -3,29 +3,36 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // Helper to create a soft glow texture
-function createSnowTexture() {
+function createSnowTexture(size = 32) {
     const canvas = document.createElement('canvas');
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = size;
+    canvas.height = size;
     const context = canvas.getContext('2d');
 
-    const gradient = context.createRadialGradient(16, 16, 0, 16, 16, 16);
+    const center = size / 2;
+    const gradient = context.createRadialGradient(center, center, 0, center, center, center);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
     gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.5)');
     gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
     context.fillStyle = gradient;
-    context.fillRect(0, 0, 32, 32);
+    context.fillRect(0, 0, size, size);
 
     const texture = new THREE.CanvasTexture(canvas);
     return texture;
 }
 
-export default function Snow({ isShaking }) {
+export default function Snow({
+    isShaking,
+    radius = 0.85,
+    count = 1500,
+    size = 0.05,
+    impulseStrength = 1.0,
+    textureSize = 32,
+}) {
     const pointsRef = useRef();
-    const count = 1500;
 
-    const texture = useMemo(() => createSnowTexture(), []);
+    const texture = useMemo(() => createSnowTexture(textureSize), [textureSize]);
 
     // Initial positions
     const positions = useMemo(() => {
@@ -35,7 +42,7 @@ export default function Snow({ isShaking }) {
             // Random position inside sphere
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(Math.random() * 2 - 1);
-            const r = 0.85 * Math.cbrt(Math.random()); // Radius 0.85
+            const r = radius * 0.95 * Math.cbrt(Math.random()); // Keep inside sphere
 
             pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
             pos[i * 3 + 1] = r * Math.cos(phi); // Random Y
@@ -43,7 +50,7 @@ export default function Snow({ isShaking }) {
         }
 
         return pos;
-    }, []);
+    }, [count, radius]);
 
     const prevShaking = useRef(false);
     // Store velocities for physics
@@ -54,11 +61,11 @@ export default function Snow({ isShaking }) {
         const radii = new Float32Array(count);
         for (let i = 0; i < count; i++) {
             // Uniform distribution on a disc: sqrt(random)
-            // Max radius 0.6 ensures they gather at the bottom but don't clump
-            radii[i] = Math.sqrt(Math.random()) * 0.8;
+            // Keep pile within globe radius
+            radii[i] = Math.sqrt(Math.random()) * radius * 0.8;
         }
         return radii;
-    }, []);
+    }, [count, radius]);
 
     // Random gravity factor for each particle
     const gravityFactors = useMemo(() => {
@@ -67,14 +74,14 @@ export default function Snow({ isShaking }) {
             factors[i] = 0.5 + Math.random() * 1.0; // 0.5 to 1.5
         }
         return factors;
-    }, []);
+    }, [count]);
 
     useFrame(() => {
         if (!pointsRef.current) return;
 
         const positionsAttr = pointsRef.current.geometry.attributes.position;
         const currentPositions = positionsAttr.array;
-        const radiusSq = 0.85 * 0.85;
+        const radiusSq = radius * radius;
 
         // Detect trigger
         const isTriggered = isShaking && !prevShaking.current;
@@ -85,9 +92,9 @@ export default function Snow({ isShaking }) {
 
             // 1. IMPULSE: If triggered, launch particles up!
             if (isTriggered) {
-                velocities[idx] += (Math.random() - 0.5) * 0.04; // Spread X
-                velocities[idx + 1] += 0.03 + Math.random() * 0.06; // Launch UP
-                velocities[idx + 2] += (Math.random() - 0.5) * 0.04; // Spread Z
+                velocities[idx] += (Math.random() - 0.5) * 0.04 * impulseStrength; // Spread X
+                velocities[idx + 1] += (0.03 + Math.random() * 0.06) * impulseStrength; // Launch UP
+                velocities[idx + 2] += (Math.random() - 0.5) * 0.04 * impulseStrength; // Spread Z
             }
 
             // 2. PHYSICS
@@ -161,7 +168,7 @@ export default function Snow({ isShaking }) {
             </bufferGeometry>
             <pointsMaterial
                 map={texture}
-                size={0.05}
+                size={size}
                 color="white"
                 transparent
                 opacity={0.8}

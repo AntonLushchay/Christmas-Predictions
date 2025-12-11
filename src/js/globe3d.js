@@ -9,14 +9,21 @@ export class Globe3D {
         this.width = container.clientWidth;
         this.height = container.clientHeight;
 
+        // Detect mobile device
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+        );
+        this.isTablet = this.width > 600 && this.width < 1024;
+
         // Инициализация сцены
         this.scene = new THREE.Scene();
         this.scene.background = null; // Прозрачный фон!
         this.scene.fog = null;
 
-        // Камера
+        // Камера с адаптивным масштабом для мобильных
         this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
-        this.camera.position.z = 2.5;
+        // Zoom out on mobile for better fit
+        this.camera.position.z = this.isMobile ? 3.5 : 2.5;
 
         // Рендер с прозрачностью
         this.renderer = new THREE.WebGLRenderer({
@@ -135,8 +142,21 @@ export class Globe3D {
     }
 
     createGlobe() {
-        // Геометрия сферы с высокой детальностью
-        const geometry = new THREE.SphereGeometry(1, 128, 128);
+        // Adaptive geometry based on device
+        let widthSegments = 128;
+        let heightSegments = 128;
+
+        if (this.isMobile) {
+            // Mobile: significantly reduce geometry for performance
+            widthSegments = 32;
+            heightSegments = 32;
+        } else if (this.isTablet) {
+            // Tablet: medium quality
+            widthSegments = 64;
+            heightSegments = 64;
+        }
+
+        const geometry = new THREE.SphereGeometry(1, widthSegments, heightSegments);
 
         // Реалистичный стеклянный материал
         const material = new THREE.MeshPhysicalMaterial({
@@ -173,7 +193,11 @@ export class Globe3D {
         this.createSnowflakes();
     }
 
-    createSnowflakes(count = 150) {
+    createSnowflakes(count) {
+        // Adaptive snowflake count based on device
+        if (count === undefined) {
+            count = this.isMobile ? 50 : 150; // Reduce on mobile
+        }
         const geometry = new THREE.BufferGeometry();
         const positions = [];
         const velocities = [];

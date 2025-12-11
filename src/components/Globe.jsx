@@ -1,10 +1,23 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { MeshTransmissionMaterial, Text } from '@react-three/drei';
+import { MeshTransmissionMaterial, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import Snow from './Snow';
 
-function AnimatedPrediction({ children }) {
+// Preload font to prevent first-render glitch
+function FontPreloader() {
+    return (
+        <Text
+            visible={false}
+            font={`${import.meta.env.BASE_URL}fonts/GreatVibes-Regular.ttf`}
+            fontSize={0.1}
+        >
+            preload
+        </Text>
+    );
+}
+
+function AnimatedPrediction({ children, isMobile, globeScale }) {
     const textRef = useRef();
 
     useFrame((state, delta) => {
@@ -30,6 +43,11 @@ function AnimatedPrediction({ children }) {
         }
     });
 
+    // Adaptive text sizing for mobile
+    const fontSize = isMobile ? 0.11 : 0.2;
+    const maxWidth = isMobile ? globeScale * 0.85 : 1.4;
+    const outlineWidth = isMobile ? 0.003 : 0.005;
+
     return (
         <Text
             ref={textRef}
@@ -38,15 +56,15 @@ function AnimatedPrediction({ children }) {
             scale={[0.5, 0.5, 0.5]} // Start: Small
             fillOpacity={0} // Start: Transparent
             outlineOpacity={0}
-            fontSize={0.2}
+            fontSize={fontSize}
             color="#FFD700" // Gold
-            outlineWidth={0.005}
+            outlineWidth={outlineWidth}
             outlineColor="#8B4513" // SaddleBrown
             font={`${import.meta.env.BASE_URL}fonts/GreatVibes-Regular.ttf`}
             anchorX="center"
             anchorY="middle"
             textAlign="center"
-            maxWidth={1.4}
+            maxWidth={maxWidth}
         >
             {children}
         </Text>
@@ -57,10 +75,23 @@ export default function Globe({ isShaking, prediction }) {
     const meshRef = useRef();
     const groupRef = useRef();
 
+    // Detect mobile device
+    const [isMobile] = React.useState(() => {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+        );
+    });
+
     // Animation state tracking
     const shakeStartTime = useRef(0);
     const startRotationY = useRef(0);
     const prevShaking = useRef(false);
+
+    // Adaptive scale based on device
+    const globeScale = isMobile ? 0.6 : 1;
+    const snowCount = isMobile ? 250 : 2000; // More particles for desktop
+    const snowSize = isMobile ? 0.03 : 0.05;
+    const snowImpulse = isMobile ? 0.5 : 1.0; // Reduce shake strength on mobile
 
     useFrame((state) => {
         // Detect start of shake
@@ -99,26 +130,42 @@ export default function Globe({ isShaking, prediction }) {
         roughness: 0,
         transmission: 1,
         ior: 1.2,
-        chromaticAberration: 0.02,
+        chromaticAberration: isMobile ? 0 : 0.02,
         backside: true,
     };
 
+    // Adaptive resolution based on device
+    const resolution = isMobile ? 512 : 2048;
+    const sphereSegments = isMobile ? 32 : 64;
+
     return (
         <group ref={groupRef}>
+            <FontPreloader />
             <mesh ref={meshRef} castShadow receiveShadow>
-                <sphereGeometry args={[1, 64, 64]} />
+                <sphereGeometry args={[globeScale, sphereSegments, sphereSegments]} />
                 <MeshTransmissionMaterial
                     {...config}
-                    resolution={2048} // Higher resolution for better glass quality on large screens
-                    distortion={0.2}
-                    distortionScale={0.3}
-                    temporalDistortion={0.1}
+                    resolution={resolution}
+                    distortion={isMobile ? 0 : 0.2}
+                    distortionScale={isMobile ? 0 : 0.3}
+                    temporalDistortion={isMobile ? 0 : 0.1}
                 />
 
-                <Snow isShaking={isShaking} />
+                <Snow
+                    isShaking={isShaking}
+                    radius={globeScale * 0.9}
+                    count={snowCount}
+                    size={snowSize}
+                    impulseStrength={snowImpulse}
+                    textureSize={isMobile ? 16 : 32}
+                />
             </mesh>
 
-            {prediction && <AnimatedPrediction>{prediction}</AnimatedPrediction>}
+            {prediction && (
+                <AnimatedPrediction isMobile={isMobile} globeScale={globeScale}>
+                    {prediction}
+                </AnimatedPrediction>
+            )}
         </group>
     );
 }

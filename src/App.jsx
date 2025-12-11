@@ -1,0 +1,74 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import Scene from './components/Scene';
+import { predictions } from './js/predictions';
+import { playMagicSound } from './js/audio';
+import { ShakeDetector } from './js/shake';
+
+export default function App() {
+    const [lang, setLang] = useState('ru');
+    const [prediction, setPrediction] = useState('');
+    const [isShaking, setIsShaking] = useState(false);
+    const [shakeDetector, setShakeDetector] = useState(null);
+
+    const handleShake = useCallback(() => {
+        if (isShaking) return;
+
+        setIsShaking(true);
+        setPrediction(''); // Clear previous prediction
+        playMagicSound();
+
+        // Show prediction earlier
+        setTimeout(() => {
+            const currentPredictions = predictions[lang];
+            const randomPrediction =
+                currentPredictions[Math.floor(Math.random() * currentPredictions.length)];
+            setPrediction(randomPrediction);
+        }, 1000);
+
+        // Stop shaking after animation duration
+        setTimeout(() => {
+            setIsShaking(false);
+        }, 6000);
+    }, [isShaking, lang]);
+
+    // Initialize Shake Detector
+    useEffect(() => {
+        const detector = new ShakeDetector({
+            onShake: handleShake,
+            threshold: 15,
+        });
+        detector.start();
+        setShakeDetector(detector);
+
+        return () => {
+            detector.stop();
+        };
+    }, [handleShake]);
+
+    // Click handler for desktop testing
+    const handleGlobeClick = () => {
+        handleShake();
+    };
+
+    const toggleLang = () => {
+        setLang((prev) => (prev === 'ru' ? 'en' : 'ru'));
+    };
+
+    return (
+        <div className="app-container">
+            <div className="scene" onClick={handleGlobeClick}>
+                <Scene isShaking={isShaking} prediction={prediction} />
+            </div>
+
+            <button
+                className="lang-toggle"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    toggleLang();
+                }}
+            >
+                {lang.toUpperCase()}
+            </button>
+        </div>
+    );
+}

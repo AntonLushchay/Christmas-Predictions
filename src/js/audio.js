@@ -1,53 +1,31 @@
-let audioContext = null;
-
 export function initAudio() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioContext.state === 'suspended') {
-    audioContext.resume();
-  }
+    // Placeholder if needed for future WebAudio API usage
 }
 
 export function playMagicSound() {
-  initAudio();
-  
-  const now = audioContext.currentTime;
-  
-  // Primary Tone (Bell)
-  const osc = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-  
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(880, now); // A5
-  osc.frequency.exponentialRampToValueAtTime(440, now + 1.5); // Drop pitch slightly
-  
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(0.3, now + 0.05); // Attack
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 2); // Decay
-  
-  osc.connect(gain);
-  gain.connect(audioContext.destination);
-  
-  osc.start(now);
-  osc.stop(now + 2);
-  
-  // Sparkles (High pitch randoms)
-  for (let i = 0; i < 5; i++) {
-    const sOsc = audioContext.createOscillator();
-    const sGain = audioContext.createGain();
-    
-    sOsc.type = 'triangle';
-    sOsc.frequency.setValueAtTime(1200 + Math.random() * 1000, now + i * 0.1);
-    
-    sGain.gain.setValueAtTime(0, now + i * 0.1);
-    sGain.gain.linearRampToValueAtTime(0.05, now + i * 0.1 + 0.05);
-    sGain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.5);
-    
-    sOsc.connect(sGain);
-    sGain.connect(audioContext.destination);
-    
-    sOsc.start(now + i * 0.1);
-    sOsc.stop(now + i * 0.1 + 0.5);
-  }
+    // Use the file from the public folder
+    const audio = new Audio(`${import.meta.env.BASE_URL}magic-magic-sound-4.mp3`);
+
+    const startVolume = 0.5;
+    audio.volume = startVolume;
+
+    audio.play().catch((error) => {
+        console.warn('Audio playback failed:', error);
+    });
+
+    // Start fading out at 3 seconds to finish by 4 seconds
+    setTimeout(() => {
+        const fadeAudio = setInterval(() => {
+            // Decrease volume smoothly
+            if (audio.volume > 0.05) {
+                audio.volume -= 0.05;
+            } else {
+                // Cleanup when silent
+                audio.volume = 0;
+                audio.pause();
+                audio.currentTime = 0;
+                clearInterval(fadeAudio);
+            }
+        }, 100); // 10 steps of 100ms = 1 second fade
+    }, 6000);
 }

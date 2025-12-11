@@ -3,18 +3,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&display=swap');
 
 body {
-  margin: 0;
-  padding: 0;
-  background-color: $color-bg;
-  background-image: url('/background.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  color: $color-text;
-  font-family: $font-main;
-  overflow: hidden;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    margin: 0;
+    padding: 0;
+    background-color: $color-bg;
+    background-image: url('/background_festive.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    color: $color-text;
+    font-family: $font-main;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

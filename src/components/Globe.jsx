@@ -90,7 +90,7 @@ export default function Globe({ isShaking, prediction }) {
     // Adaptive scale based on device
     const globeScale = isMobile ? 0.6 : 1;
     const snowCount = isMobile ? 250 : 2000; // More particles for desktop
-    const snowSize = isMobile ? 0.03 : 0.055;
+    const snowSize = isMobile ? 0.03 : 0.03; // make desktop flakes smaller and crisper
     const snowImpulse = isMobile ? 0.5 : 1.0; // Reduce shake strength on mobile
 
     useFrame((state) => {

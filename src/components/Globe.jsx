@@ -46,7 +46,7 @@ function AnimatedPrediction({ children, isMobile, globeScale }) {
     // Adaptive text sizing for mobile
     const fontSize = isMobile ? 0.11 : 0.2;
     const maxWidth = isMobile ? globeScale * 0.85 : 1.4;
-    const outlineWidth = isMobile ? 0.003 : 0.005;
+    const outlineWidth = isMobile ? 0.006 : 0.012; // Увеличен контур в 2 раза
 
     return (
         <Text
@@ -57,14 +57,15 @@ function AnimatedPrediction({ children, isMobile, globeScale }) {
             fillOpacity={0} // Start: Transparent
             outlineOpacity={0}
             fontSize={fontSize}
-            color="#FFD700" // Gold
+            color="#FFED4E" // Более яркое золото
             outlineWidth={outlineWidth}
-            outlineColor="#8B4513" // SaddleBrown
+            outlineColor="#1A1A1A" // Более чёрный контур (вместо коричневого)
             font={`${import.meta.env.BASE_URL}fonts/GreatVibes-Regular.ttf`}
             anchorX="center"
             anchorY="middle"
             textAlign="center"
             maxWidth={maxWidth}
+            letterSpacing={0.05} // Добавил немного расстояния между буквами
         >
             {children}
         </Text>
@@ -89,9 +90,9 @@ export default function Globe({ isShaking, prediction }) {
 
     // Adaptive scale based on device
     const globeScale = isMobile ? 0.6 : 1;
-    const snowCount = isMobile ? 250 : 2000; // More particles for desktop
-    const snowSize = isMobile ? 0.03 : 0.03; // make desktop flakes smaller and crisper
-    const snowImpulse = isMobile ? 0.5 : 1.0; // Reduce shake strength on mobile
+    const snowCount = isMobile ? 250 : 800;
+    const snowSize = isMobile ? 0.03 : 0.03;
+    const snowImpulse = isMobile ? 0.5 : 1.0;
 
     useFrame((state) => {
         // Detect start of shake
@@ -130,13 +131,13 @@ export default function Globe({ isShaking, prediction }) {
         roughness: 0,
         transmission: 1,
         ior: 1.2,
-        chromaticAberration: isMobile ? 0 : 0.02,
+        chromaticAberration: 0,
         backside: true,
     };
 
     // Adaptive resolution based on device
-    const resolution = isMobile ? 512 : 2048;
-    const sphereSegments = isMobile ? 32 : 64;
+    const resolution = isMobile ? 512 : 1024;
+    const sphereSegments = isMobile ? 32 : 48;
 
     return (
         <group ref={groupRef}>
@@ -146,9 +147,9 @@ export default function Globe({ isShaking, prediction }) {
                 <MeshTransmissionMaterial
                     {...config}
                     resolution={resolution}
-                    distortion={isMobile ? 0 : 0.2}
-                    distortionScale={isMobile ? 0 : 0.3}
-                    temporalDistortion={isMobile ? 0 : 0.1}
+                    distortion={0}
+                    distortionScale={0}
+                    temporalDistortion={0}
                 />
 
                 <Snow

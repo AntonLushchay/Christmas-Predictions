@@ -10,9 +10,7 @@ export default function App() {
     const [isShaking, setIsShaking] = useState(false);
     const [shakeDetector, setShakeDetector] = useState(null);
     const [isMobile] = useState(() =>
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-            navigator.userAgent,
-        ),
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
     );
 
     const handleShake = useCallback(() => {

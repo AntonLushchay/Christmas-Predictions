@@ -111,7 +111,7 @@ function Background() {
     );
 }
 
-export default function Scene({ isShaking, prediction }) {
+export default function Scene({ isShaking, prediction, isLowEnd = false }) {
     const isMobile = useMemo(() => {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
             navigator.userAgent,
@@ -122,11 +122,11 @@ export default function Scene({ isShaking, prediction }) {
 
     return (
         <Canvas
-            dpr={[1, 2]}
+            dpr={isLowEnd ? 1 : [1, 2]}
             style={{ background: 'transparent', width: '100vw', height: '100vh' }}
             gl={{
                 alpha: true,
-                antialias: true,
+                antialias: !isLowEnd,
                 preserveDrawingBuffer: false,
                 powerPreference: 'high-performance',
             }}
@@ -140,7 +140,7 @@ export default function Scene({ isShaking, prediction }) {
 
             <Suspense fallback={null}>
                 <Background />
-                <Globe isShaking={isShaking} prediction={prediction} />
+                <Globe isShaking={isShaking} prediction={prediction} isLowEnd={isLowEnd} />
                 <Environment preset="city" />
             </Suspense>
         </Canvas>

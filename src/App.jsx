@@ -4,6 +4,7 @@ import Loader from './components/Loader';
 import { predictions } from './js/predictions';
 import { playMagicSound } from './js/audio';
 import { ShakeDetector } from './js/shake';
+import { DeviceDetector } from './js/deviceDetection';
 
 export default function App() {
     const [lang, setLang] = useState('ru');
@@ -11,6 +12,7 @@ export default function App() {
     const [isShaking, setIsShaking] = useState(false);
     const [shakeDetector, setShakeDetector] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLowEnd, setIsLowEnd] = useState(false);
     const [isMobile] = useState(() =>
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
     );
@@ -36,14 +38,27 @@ export default function App() {
         }, 6000);
     }, [isShaking, lang]);
 
-    // Hide loader after scene is ready
+    // Detect device performance and hide loader
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setIsLoading(false);
-        }, 1500); // Минимум 1.5 сек для показа лоадера
+        const detectDevice = async () => {
+            if (!isMobile) {
+                const detector = new DeviceDetector();
+                const performanceLevel = await detector.detect();
+                setIsLowEnd(performanceLevel === 'low');
+            }
 
-        return () => clearTimeout(timer);
-    }, []);
+            // Минимум 1.5 сек для показа лоадера
+            const minLoadTime = 1500;
+            const elapsed = performance.now();
+            const remaining = Math.max(0, minLoadTime - elapsed);
+
+            setTimeout(() => {
+                setIsLoading(false);
+            }, remaining);
+        };
+
+        detectDevice();
+    }, [isMobile]);
 
     // Initialize Shake Detector (desktop only)
     useEffect(() => {
@@ -75,7 +90,7 @@ export default function App() {
             <Loader isLoading={isLoading} />
             <div className="app-container">
                 <div className="scene" onClick={handleGlobeClick}>
-                    <Scene isShaking={isShaking} prediction={prediction} />
+                    <Scene isShaking={isShaking} prediction={prediction} isLowEnd={isLowEnd} />
                 </div>
 
                 <button

@@ -31,6 +31,7 @@ export default function Snow({
     textureSize = 32,
 }) {
     const pointsRef = useRef();
+    const prevCountRef = useRef(count);
 
     const texture = useMemo(() => createSnowTexture(textureSize), [textureSize]);
 
@@ -54,7 +55,7 @@ export default function Snow({
 
     const prevShaking = useRef(false);
     // Store velocities for physics
-    const velocities = useMemo(() => new Float32Array(count * 3), []);
+    const velocities = useMemo(() => new Float32Array(count * 3), [count]);
 
     // Random stopping point for each particle to create a pile
     const stopRadii = useMemo(() => {
@@ -76,10 +77,33 @@ export default function Snow({
         return factors;
     }, [count]);
 
+    // Cleanup and reinit geometry when count changes
+    React.useEffect(() => {
+        if (pointsRef.current && prevCountRef.current !== count) {
+            // Dispose old geometry
+            if (pointsRef.current.geometry) {
+                pointsRef.current.geometry.dispose();
+            }
+            prevCountRef.current = count;
+        }
+
+        return () => {
+            // Cleanup on unmount
+            if (pointsRef.current?.geometry) {
+                pointsRef.current.geometry.dispose();
+            }
+        };
+    }, [count]);
+
     useFrame(() => {
-        if (!pointsRef.current) return;
+        if (!pointsRef.current || !pointsRef.current.geometry) return;
 
         const positionsAttr = pointsRef.current.geometry.attributes.position;
+        if (!positionsAttr || positionsAttr.array.length !== count * 3) {
+            // Geometry was disposed or doesn't match count, skip frame
+            return;
+        }
+
         const currentPositions = positionsAttr.array;
         const radiusSq = radius * radius;
 

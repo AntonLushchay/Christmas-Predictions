@@ -10,4 +10,8 @@ export default defineConfig({
         host: true,
         strictPort: true,
     },
+    build: {
+        sourcemap: false,
+        minify: 'esbuild',
+    },
 });

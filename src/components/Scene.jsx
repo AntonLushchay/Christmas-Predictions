@@ -118,13 +118,15 @@ export default function Scene({ isShaking, prediction }) {
         );
     }, []);
 
+    const isDesktop = useMemo(() => !isMobile, [isMobile]);
+
     return (
         <Canvas
-            dpr={isMobile ? 1 : [1, 1.5]}
+            dpr={isDesktop ? [1, 2.5] : 1}
             style={{ background: 'transparent', width: '100vw', height: '100vh' }}
             gl={{
                 alpha: true,
-                antialias: !isMobile,
+                antialias: isDesktop,
                 preserveDrawingBuffer: false,
                 powerPreference: 'high-performance',
             }}

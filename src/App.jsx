@@ -9,6 +9,11 @@ export default function App() {
     const [prediction, setPrediction] = useState('');
     const [isShaking, setIsShaking] = useState(false);
     const [shakeDetector, setShakeDetector] = useState(null);
+    const [isMobile] = useState(() =>
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+        ),
+    );
 
     const handleShake = useCallback(() => {
         if (isShaking) return;
@@ -31,8 +36,10 @@ export default function App() {
         }, 6000);
     }, [isShaking, lang]);
 
-    // Initialize Shake Detector
+    // Initialize Shake Detector (desktop only)
     useEffect(() => {
+        if (isMobile) return; // disable motion-trigger on mobile
+
         const detector = new ShakeDetector({
             onShake: handleShake,
             threshold: 15,
@@ -43,7 +50,7 @@ export default function App() {
         return () => {
             detector.stop();
         };
-    }, [handleShake]);
+    }, [handleShake, isMobile]);
 
     // Click handler for desktop testing
     const handleGlobeClick = () => {

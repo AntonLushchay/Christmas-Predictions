@@ -90,7 +90,7 @@ export default function Globe({ isShaking, prediction }) {
     // Adaptive scale based on device
     const globeScale = isMobile ? 0.6 : 1;
     const snowCount = isMobile ? 250 : 2000; // More particles for desktop
-    const snowSize = isMobile ? 0.03 : 0.05;
+    const snowSize = isMobile ? 0.03 : 0.055;
     const snowImpulse = isMobile ? 0.5 : 1.0; // Reduce shake strength on mobile
 
     useFrame((state) => {
@@ -157,7 +157,7 @@ export default function Globe({ isShaking, prediction }) {
                     count={snowCount}
                     size={snowSize}
                     impulseStrength={snowImpulse}
-                    textureSize={isMobile ? 16 : 32}
+                    textureSize={isMobile ? 16 : 64}
                 />
             </mesh>
 

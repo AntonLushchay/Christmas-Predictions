@@ -122,11 +122,11 @@ export default function Scene({ isShaking, prediction }) {
 
     return (
         <Canvas
-            dpr={1}
+            dpr={[1, 2]}
             style={{ background: 'transparent', width: '100vw', height: '100vh' }}
             gl={{
                 alpha: true,
-                antialias: false,
+                antialias: true,
                 preserveDrawingBuffer: false,
                 powerPreference: 'high-performance',
             }}

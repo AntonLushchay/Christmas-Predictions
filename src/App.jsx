@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Scene from './components/Scene';
+import Loader from './components/Loader';
 import { predictions } from './js/predictions';
 import { playMagicSound } from './js/audio';
 import { ShakeDetector } from './js/shake';
@@ -9,6 +10,7 @@ export default function App() {
     const [prediction, setPrediction] = useState('');
     const [isShaking, setIsShaking] = useState(false);
     const [shakeDetector, setShakeDetector] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [isMobile] = useState(() =>
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
     );
@@ -33,6 +35,15 @@ export default function App() {
             setIsShaking(false);
         }, 6000);
     }, [isShaking, lang]);
+
+    // Hide loader after scene is ready
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoading(false);
+        }, 1500); // Минимум 1.5 сек для показа лоадера
+
+        return () => clearTimeout(timer);
+    }, []);
 
     // Initialize Shake Detector (desktop only)
     useEffect(() => {
@@ -60,20 +71,23 @@ export default function App() {
     };
 
     return (
-        <div className="app-container">
-            <div className="scene" onClick={handleGlobeClick}>
-                <Scene isShaking={isShaking} prediction={prediction} />
-            </div>
+        <>
+            <Loader isLoading={isLoading} />
+            <div className="app-container">
+                <div className="scene" onClick={handleGlobeClick}>
+                    <Scene isShaking={isShaking} prediction={prediction} />
+                </div>
 
-            <button
-                className="lang-toggle"
-                onClick={(e) => {
-                    e.stopPropagation();
-                    toggleLang();
-                }}
-            >
-                {lang.toUpperCase()}
-            </button>
-        </div>
+                <button
+                    className="lang-toggle"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLang();
+                    }}
+                >
+                    {lang.toUpperCase()}
+                </button>
+            </div>
+        </>
     );
 }

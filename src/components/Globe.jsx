@@ -44,9 +44,9 @@ function AnimatedPrediction({ children, isMobile, globeScale }) {
     });
 
     // Adaptive text sizing for mobile
-    const fontSize = isMobile ? 0.11 : 0.2;
+    const fontSize = isMobile ? 0.11 : 0.22;
     const maxWidth = isMobile ? globeScale * 0.85 : 1.4;
-    const outlineWidth = isMobile ? 0.006 : 0.012; // Увеличен контур в 2 раза
+    const outlineWidth = isMobile ? 0.006 : 0.015; // Увеличен контур для лучшей читаемости
 
     return (
         <Text
@@ -90,8 +90,8 @@ export default function Globe({ isShaking, prediction }) {
 
     // Adaptive scale based on device
     const globeScale = isMobile ? 0.6 : 1;
-    const snowCount = isMobile ? 250 : 800;
-    const snowSize = isMobile ? 0.03 : 0.03;
+    const snowCount = isMobile ? 250 : 1200;
+    const snowSize = isMobile ? 0.03 : 0.035;
     const snowImpulse = isMobile ? 0.5 : 1.0;
 
     useFrame((state) => {
@@ -136,8 +136,8 @@ export default function Globe({ isShaking, prediction }) {
     };
 
     // Adaptive resolution based on device
-    const resolution = isMobile ? 512 : 1024;
-    const sphereSegments = isMobile ? 32 : 48;
+    const resolution = isMobile ? 512 : 2048;
+    const sphereSegments = isMobile ? 32 : 64;
 
     return (
         <group ref={groupRef}>

@@ -4,13 +4,13 @@ import { Environment, PerspectiveCamera, useTexture } from '@react-three/drei';
 import Globe from './Globe';
 import * as THREE from 'three';
 
-function FPSSampler({ onFPSSample }) {
-    const sampling = React.useRef({ 
+function FPSSampler({ onFPSSample, isMobile }) {
+    const sampling = React.useRef({
         phase: 1, // 1 = первый замер, 2 = пауза, 3 = второй замер
-        start: 0, 
-        frames: 0, 
+        start: 0,
+        frames: 0,
         sample1: null,
-        sample2: null
+        sample2: null,
     });
 
     React.useEffect(() => {
@@ -25,10 +25,11 @@ function FPSSampler({ onFPSSample }) {
         const s = sampling.current;
         const elapsed = performance.now() - s.start;
 
-        // Фаза 1: первый замер (0-1 сек)
+        // Фаза 1: первый замер (0-1 сек, мобильным 1.5 сек)
         if (s.phase === 1) {
             s.frames += 1;
-            if (elapsed >= 1000) {
+            const win1 = isMobile ? 1500 : 1000;
+            if (elapsed >= win1) {
                 s.sample1 = (s.frames / elapsed) * 1000;
                 console.log(`[FPS Test 1/2] Измерено: ${s.sample1.toFixed(1)} FPS`);
                 s.phase = 2;
@@ -36,25 +37,29 @@ function FPSSampler({ onFPSSample }) {
                 s.frames = 0;
             }
         }
-        // Фаза 2: пауза 1.5 сек
+        // Фаза 2: пауза (мобильным 2.0 сек)
         else if (s.phase === 2) {
-            if (elapsed >= 1500) {
+            const pause = isMobile ? 2000 : 1500;
+            if (elapsed >= pause) {
                 s.phase = 3;
                 s.start = performance.now();
                 s.frames = 0;
             }
         }
-        // Фаза 3: второй замер (через 2.5-3.5 сек от старта)
+        // Фаза 3: второй замер (окно: мобильным 1.5 сек)
         else if (s.phase === 3) {
             s.frames += 1;
-            if (elapsed >= 1000) {
+            const win2 = isMobile ? 1500 : 1000;
+            if (elapsed >= win2) {
                 s.sample2 = (s.frames / elapsed) * 1000;
                 console.log(`[FPS Test 2/2] Измерено: ${s.sample2.toFixed(1)} FPS`);
-                
+
                 // Берём минимальный (худший) FPS из двух замеров
                 const finalFPS = Math.min(s.sample1, s.sample2);
-                console.log(`[FPS Test] Финальный FPS: ${finalFPS.toFixed(1)} (min из двух замеров)`);
-                
+                console.log(
+                    `[FPS Test] Финальный FPS: ${finalFPS.toFixed(1)} (min из двух замеров)`,
+                );
+
                 s.phase = 0; // Завершили
                 if (onFPSSample) onFPSSample(finalFPS);
             }
@@ -182,7 +187,7 @@ export default function Scene({ isShaking, prediction, isLowEnd = false, onFPSSa
 
     return (
         <Canvas
-            dpr={isLowEnd ? 1 : [1, 2]}
+            dpr={isMobile ? (isLowEnd ? 1 : 1.5) : isLowEnd ? 1 : [1, 2]}
             style={{ background: 'transparent', width: '100vw', height: '100vh' }}
             gl={{
                 alpha: true,
@@ -203,7 +208,7 @@ export default function Scene({ isShaking, prediction, isLowEnd = false, onFPSSa
                 <Globe isShaking={isShaking} prediction={prediction} isLowEnd={isLowEnd} />
                 <Environment preset="city" />
             </Suspense>
-            {onFPSSample && <FPSSampler onFPSSample={onFPSSample} />}
+            {onFPSSample && <FPSSampler onFPSSample={onFPSSample} isMobile={isMobile} />}
         </Canvas>
     );
 }

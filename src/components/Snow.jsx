@@ -204,7 +204,7 @@ export default function Snow({
                 color="white"
                 transparent
                 opacity={0.8}
-                sizeAttenuation
+                sizeAttenuation={true}
                 depthWrite={false}
                 blending={THREE.AdditiveBlending}
             />

@@ -5,25 +5,59 @@ import Globe from './Globe';
 import * as THREE from 'three';
 
 function FPSSampler({ onFPSSample }) {
-    const sampling = React.useRef({ active: true, start: 0, frames: 0, sampled: false });
+    const sampling = React.useRef({ 
+        phase: 1, // 1 = первый замер, 2 = пауза, 3 = второй замер
+        start: 0, 
+        frames: 0, 
+        sample1: null,
+        sample2: null
+    });
 
     React.useEffect(() => {
-        sampling.current.active = true;
+        sampling.current.phase = 1;
         sampling.current.start = performance.now();
         sampling.current.frames = 0;
-        sampling.current.sampled = false;
+        sampling.current.sample1 = null;
+        sampling.current.sample2 = null;
     }, []);
 
     useFrame(() => {
-        if (!sampling.current.active || sampling.current.sampled) return;
-        sampling.current.frames += 1;
-        const elapsed = performance.now() - sampling.current.start;
-        if (elapsed >= 1000) {
-            const fps = (sampling.current.frames / elapsed) * 1000;
-            console.log(`[FPS Test] Измерено: ${fps.toFixed(1)} FPS за 1 секунду рендеринга`);
-            sampling.current.sampled = true;
-            sampling.current.active = false;
-            if (onFPSSample) onFPSSample(fps);
+        const s = sampling.current;
+        const elapsed = performance.now() - s.start;
+
+        // Фаза 1: первый замер (0-1 сек)
+        if (s.phase === 1) {
+            s.frames += 1;
+            if (elapsed >= 1000) {
+                s.sample1 = (s.frames / elapsed) * 1000;
+                console.log(`[FPS Test 1/2] Измерено: ${s.sample1.toFixed(1)} FPS`);
+                s.phase = 2;
+                s.start = performance.now();
+                s.frames = 0;
+            }
+        }
+        // Фаза 2: пауза 1.5 сек
+        else if (s.phase === 2) {
+            if (elapsed >= 1500) {
+                s.phase = 3;
+                s.start = performance.now();
+                s.frames = 0;
+            }
+        }
+        // Фаза 3: второй замер (через 2.5-3.5 сек от старта)
+        else if (s.phase === 3) {
+            s.frames += 1;
+            if (elapsed >= 1000) {
+                s.sample2 = (s.frames / elapsed) * 1000;
+                console.log(`[FPS Test 2/2] Измерено: ${s.sample2.toFixed(1)} FPS`);
+                
+                // Берём минимальный (худший) FPS из двух замеров
+                const finalFPS = Math.min(s.sample1, s.sample2);
+                console.log(`[FPS Test] Финальный FPS: ${finalFPS.toFixed(1)} (min из двух замеров)`);
+                
+                s.phase = 0; // Завершили
+                if (onFPSSample) onFPSSample(finalFPS);
+            }
         }
     });
 

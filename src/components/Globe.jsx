@@ -93,7 +93,7 @@ export default function Globe({ isShaking, prediction, isLowEnd = false }) {
     // Adaptive scale based on device
     const globeScale = isMobile ? 0.6 : 1;
     const snowCount = isMobile ? 250 : isLowEnd ? 1250 : 2200;
-    const snowSize = isMobile ? 0.03 : isLowEnd ? 0.025 : 0.035;
+    const snowSize = isMobile ? 0.04 : isLowEnd ? 0.04 : 0.04;
     const snowImpulse = isMobile ? 0.65 : 1.0;
 
     useFrame((state) => {

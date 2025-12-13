@@ -4,6 +4,32 @@ import { Environment, PerspectiveCamera, useTexture } from '@react-three/drei';
 import Globe from './Globe';
 import * as THREE from 'three';
 
+function FPSSampler({ onFPSSample }) {
+    const sampling = React.useRef({ active: true, start: 0, frames: 0, sampled: false });
+
+    React.useEffect(() => {
+        sampling.current.active = true;
+        sampling.current.start = performance.now();
+        sampling.current.frames = 0;
+        sampling.current.sampled = false;
+    }, []);
+
+    useFrame(() => {
+        if (!sampling.current.active || sampling.current.sampled) return;
+        sampling.current.frames += 1;
+        const elapsed = performance.now() - sampling.current.start;
+        if (elapsed >= 1000) {
+            const fps = (sampling.current.frames / elapsed) * 1000;
+            console.log(`[FPS Test] Измерено: ${fps.toFixed(1)} FPS за 1 секунду рендеринга`);
+            sampling.current.sampled = true;
+            sampling.current.active = false;
+            if (onFPSSample) onFPSSample(fps);
+        }
+    });
+
+    return null;
+}
+
 function CameraRig() {
     const { gl } = useThree();
     const touchPos = React.useRef({ x: 0, y: 0 });
@@ -111,7 +137,7 @@ function Background() {
     );
 }
 
-export default function Scene({ isShaking, prediction, isLowEnd = false }) {
+export default function Scene({ isShaking, prediction, isLowEnd = false, onFPSSample }) {
     const isMobile = useMemo(() => {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
             navigator.userAgent,
@@ -143,6 +169,7 @@ export default function Scene({ isShaking, prediction, isLowEnd = false }) {
                 <Globe isShaking={isShaking} prediction={prediction} isLowEnd={isLowEnd} />
                 <Environment preset="city" />
             </Suspense>
+            {onFPSSample && <FPSSampler onFPSSample={onFPSSample} />}
         </Canvas>
     );
 }

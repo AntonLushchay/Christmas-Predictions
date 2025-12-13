@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Scene from './components/Scene';
 import Loader from './components/Loader';
 import { predictions } from './js/predictions';
 import { playMagicSound } from './js/audio';
 import { ShakeDetector } from './js/shake';
-import { DeviceDetector } from './js/deviceDetection';
 
 export default function App() {
     const [lang, setLang] = useState('ru');
@@ -38,27 +37,27 @@ export default function App() {
         }, 6000);
     }, [isShaking, lang]);
 
-    // Detect device performance and hide loader
-    useEffect(() => {
-        const detectDevice = async () => {
-            if (!isMobile) {
-                const detector = new DeviceDetector();
-                const performanceLevel = await detector.detect();
-                setIsLowEnd(performanceLevel === 'low');
-            }
+    // Loader timing and FPS handler
+    const loadStartRef = useRef(performance.now());
 
-            // Минимум 1.5 сек для показа лоадера
-            const minLoadTime = 1500;
-            const elapsed = performance.now();
-            const remaining = Math.max(0, minLoadTime - elapsed);
+    const handleFPSSample = useCallback((fps) => {
+        const threshold = 40;
+        const isLow = fps < threshold;
 
-            setTimeout(() => {
-                setIsLoading(false);
-            }, remaining);
-        };
+        console.log(`[Режим графики] FPS: ${fps.toFixed(1)}, Порог: ${threshold}`);
+        console.log(
+            `[Режим графики] Выбран режим: ${
+                isLow ? '🔻 LOW-END (пониженное качество)' : '✨ HIGH-END (максимальное качество)'
+            }`,
+        );
 
-        detectDevice();
-    }, [isMobile]);
+        setIsLowEnd(isLow);
+
+        const minLoadTime = 1500;
+        const elapsed = performance.now() - loadStartRef.current;
+        const remaining = Math.max(0, minLoadTime - elapsed);
+        setTimeout(() => setIsLoading(false), remaining);
+    }, []);
 
     // Initialize Shake Detector (desktop only)
     useEffect(() => {
@@ -90,7 +89,12 @@ export default function App() {
             <Loader isLoading={isLoading} />
             <div className="app-container">
                 <div className="scene" onClick={handleGlobeClick}>
-                    <Scene isShaking={isShaking} prediction={prediction} isLowEnd={isLowEnd} />
+                    <Scene
+                        isShaking={isShaking}
+                        prediction={prediction}
+                        isLowEnd={isLowEnd}
+                        onFPSSample={handleFPSSample}
+                    />
                 </div>
 
                 <button

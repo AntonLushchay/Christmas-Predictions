@@ -95,7 +95,7 @@ export default function Snow({
         };
     }, [count]);
 
-    useFrame(() => {
+    useFrame((state, delta) => {
         if (!pointsRef.current || !pointsRef.current.geometry) return;
 
         const positionsAttr = pointsRef.current.geometry.attributes.position;
@@ -107,6 +107,9 @@ export default function Snow({
         const currentPositions = positionsAttr.array;
         const radiusSq = radius * radius;
 
+        // Normalize delta to 60 FPS baseline (delta at 60fps ≈ 0.0167)
+        const deltaMultiplier = delta * 60;
+
         // Detect trigger
         const isTriggered = isShaking && !prevShaking.current;
         prevShaking.current = isShaking;
@@ -116,23 +119,28 @@ export default function Snow({
 
             // 1. IMPULSE: If triggered, launch particles up!
             if (isTriggered) {
-                velocities[idx] += (Math.random() - 0.5) * 0.04 * impulseStrength; // Spread X
-                velocities[idx + 1] += (0.03 + Math.random() * 0.06) * impulseStrength; // Launch UP
-                velocities[idx + 2] += (Math.random() - 0.5) * 0.04 * impulseStrength; // Spread Z
+                // Случайная сила для каждой частицы (от 0.5 до 1.5)
+                const randomStrength = 0.5 + Math.random() * 1.0;
+                const effectiveStrength = impulseStrength * randomStrength;
+
+                velocities[idx] += (Math.random() - 0.5) * 0.04 * effectiveStrength; // Spread X
+                velocities[idx + 1] += (0.03 + Math.random() * 0.06) * effectiveStrength; // Launch UP
+                velocities[idx + 2] += (Math.random() - 0.5) * 0.04 * effectiveStrength; // Spread Z
             }
 
-            // 2. PHYSICS
-            // Gravity
-            velocities[idx + 1] -= 0.00006 * gravityFactors[i];
-            // Drag
-            velocities[idx] *= 0.95;
-            velocities[idx + 1] *= 0.95;
-            velocities[idx + 2] *= 0.95;
+            // 2. PHYSICS (normalized by delta)
+            // Gravity (increased for faster fall)
+            velocities[idx + 1] -= 0.00015 * gravityFactors[i] * deltaMultiplier;
+            // Drag (frame-rate independent)
+            const dragFactor = Math.pow(0.95, deltaMultiplier);
+            velocities[idx] *= dragFactor;
+            velocities[idx + 1] *= dragFactor;
+            velocities[idx + 2] *= dragFactor;
 
-            // Apply velocity
-            currentPositions[idx] += velocities[idx];
-            currentPositions[idx + 1] += velocities[idx + 1];
-            currentPositions[idx + 2] += velocities[idx + 2];
+            // Apply velocity (scaled by delta)
+            currentPositions[idx] += velocities[idx] * deltaMultiplier;
+            currentPositions[idx + 1] += velocities[idx + 1] * deltaMultiplier;
+            currentPositions[idx + 2] += velocities[idx + 2] * deltaMultiplier;
 
             // 3. COLLISION (Floor/Sphere)
             const x = currentPositions[idx];

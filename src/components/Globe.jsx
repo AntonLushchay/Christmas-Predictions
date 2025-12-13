@@ -94,7 +94,7 @@ export default function Globe({ isShaking, prediction, isLowEnd = false }) {
     const globeScale = isMobile ? 0.6 : 1;
     const snowCount = isMobile ? 250 : isLowEnd ? 1250 : 2200;
     const snowSize = isMobile ? 0.03 : isLowEnd ? 0.025 : 0.035;
-    const snowImpulse = isMobile ? 0.5 : 1.0;
+    const snowImpulse = isMobile ? 0.65 : 1.0;
 
     useFrame((state) => {
         // Detect start of shake
